@@ -1,0 +1,9 @@
+name: IDIX Media Source
+description: 'Types de source IDIX pour les entités média.'
+type: module
+package: IDIX
+# core: 8.x
+dependencies:
+  - drupal:media (>= 8.4)
+  - entity_reference_revisions:entity_reference_revisions
+  - drupal:file

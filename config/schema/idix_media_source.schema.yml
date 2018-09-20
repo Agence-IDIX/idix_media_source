@@ -1,0 +1,3 @@
+media.source.diaporama:
+  type: media.source.field_aware
+  label: '"Diaporama" media source configuration'
