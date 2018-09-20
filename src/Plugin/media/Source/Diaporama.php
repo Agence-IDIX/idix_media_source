@@ -14,7 +14,7 @@ use Drupal\media\MediaSourceEntityConstraintsInterface;
  *   label = @Translation("Diaporama"),
  *   description = @Translation("Provides business logic and metadata for slideshows."),
  *   default_thumbnail_filename = "slideshow.png",
- *   allowed_field_types = {"entity_reference", "entity_reference_revisions"},
+ *   allowed_field_types = {"entity_reference_revisions"},
  * )
  */
 class Diaporama extends MediaSourceBase implements MediaSourceEntityConstraintsInterface {
