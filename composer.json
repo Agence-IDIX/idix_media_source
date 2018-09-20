@@ -12,7 +12,6 @@
   ],
   "require": {
     "drupal/core": "8.6",
-    "drupal/media": "^1.0",
     "drupal/entity_reference_revisions": "~1.3"
   }
 }
