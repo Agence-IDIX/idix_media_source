@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Implements hook_media_source_info_alter().
+ */
+function idix_media_source_media_source_info_alter(array &$sources) {
+  if(isset($sources['oembed:video'])){
+    $sources['oembed:video']['providers'] = array_merge($sources['oembed:video']['providers'], ['Facebook', 'Dailymotion', 'Digiteka', 'TED']);
+
+    $sources['oembed:video']['class'] = "Drupal\idix_media_source\Plugin\media\Source\OEmbed";
+
+    $ProviderRepository = \Drupal::service('media.oembed.provider_repository');
+
+    array_walk($sources['oembed:video']['providers'], function(&$provider_name, $key, $ProviderRepository){
+      $provider_name = $ProviderRepository->normalizeProviderName($provider_name);
+    }, $ProviderRepository);
+
+  }
+}
