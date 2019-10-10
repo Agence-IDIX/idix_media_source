@@ -1,3 +1,7 @@
 media.source.diaporama:
   type: media.source.field_aware
   label: '"Diaporama" media source configuration'
+
+media.source.idix_generic:
+  type: media.source.field_aware
+  label: 'IDIX "Generic" media source configuration'
