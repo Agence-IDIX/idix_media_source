@@ -24,11 +24,4 @@ class Generic extends MediaSourceBase {
     return [];
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  protected function createSourceFieldStorage() {
-    return parent::createSourceFieldStorage()->set('custom_storage', TRUE);
-  }
-
 }
