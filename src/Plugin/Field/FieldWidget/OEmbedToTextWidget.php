@@ -2,6 +2,10 @@
 
 namespace Drupal\idix_media_source\Plugin\Field\FieldWidget;
 
+use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\Plugin\Field\FieldWidget\StringTextareaWidget;
 use Drupal\Core\Field\WidgetBase;
@@ -29,14 +33,12 @@ class OEmbedToTextWidget extends StringTextareaWidget {
     $new_element['fieldset'] = [
       '#type' => 'fieldset',
       '#title' => $element['#title'],
-      '#tree' => true,
-      '#attributes' => [
-        'id' => ['edit-field-media-idix-generic-' . $delta . '-fieldset']
-      ]
+      '#tree' => false,
     ];
 
     $new_element['fieldset']['container'] = [
       '#type' => 'container',
+      '#tree' => false,
     ];
 
     $new_element['fieldset']['container']['oembed_url'] = [
@@ -47,28 +49,36 @@ class OEmbedToTextWidget extends StringTextareaWidget {
     $new_element['fieldset']['container']['error'] = [
       '#type' => 'markup',
       '#markup' => '',
+      '#attributes' => [
+        'id' => ['edit-field-media-idix-generic-' . $delta . '-error'],
+      ]
     ];
 
     $new_element['fieldset']['container']['load'] = [
       '#type' => 'button',
       '#value' => "Transformer l'url en code embed",
+      '#limit_validation_errors' => [
+
+      ],
       '#ajax' => [
         'callback' => [$this, 'transformUrlToEmbed'],
-        'wrapper' => 'edit-field-media-idix-generic-' . $delta . '-fieldset',
-      ],
-      '#attributes' => [
-        // 'class' => ['inline'],
+        //'wrapper' => 'edit-field-media-idix-generic-' . $delta . '-fieldset',
       ],
       '#name' => 'load-' . $delta,
     ];
 
     $new_element['fieldset']['value'] = [
+      '#prefix' => '<div id="edit-field-media-idix-generic-' . $delta . '-value">',
+      '#suffix' => '</div>',
       '#type' => 'textarea',
       '#title' => 'Code embed',
       '#default_value' => $items[$delta]->value,
       '#rows' => $this->getSetting('rows'),
       '#placeholder' => $this->getSetting('placeholder'),
-      '#attributes' => ['class' => ['js-text-full', 'text-full']],
+      '#attributes' => [
+        'class' => ['js-text-full', 'text-full'],
+        //'id' => ['edit-field-media-idix-generic-' . $delta . '-value']
+      ],
       '#required' => $element['#required'],
     ];
 
@@ -82,12 +92,16 @@ class OEmbedToTextWidget extends StringTextareaWidget {
     $resource_fetcher = \Drupal::service('media.oembed.resource_fetcher');
 
     $trigger = $form_state->getTriggeringElement();
-    $parents = $trigger['#parents'];
     $array_parents = $trigger['#array_parents'];
+    array_pop($array_parents);
+    array_pop($array_parents);
+    array_push($array_parents, 'value');
 
-    $value = $form_state->getValue($parents[0]);
+    $delta = str_replace('load-', '', $trigger['#name']);
 
-    $url = $value[$parents[1]]['fieldset']['container']['oembed_url'];
+    $url = $form_state->getValue('oembed_url');
+
+    $response = new AjaxResponse();
 
     try {
       $resource_url = $url_resolver->getResourceUrl($url);
@@ -95,14 +109,24 @@ class OEmbedToTextWidget extends StringTextareaWidget {
 
       $markup = IFrameMarkup::create($resource->getHtml());
 
-      $form[$array_parents[0]][$array_parents[1]][$array_parents[2]][$array_parents[3]]['value']['#value'] = $markup->__toString();
+      $response->addCommand(new HtmlCommand('#edit-field-media-idix-generic-' . $delta . '-error', ''));
 
-      $form[$array_parents[0]][$array_parents[1]][$array_parents[2]][$array_parents[3]]['container']['error']['#markup'] = '';
+      $value_element = NestedArray::getValue($form, $array_parents);
+
+      $value_element['#default_value'] = $markup->__toString();
+      $value_element['#value'] = $markup->__toString();
+      unset($value_element['#prefix']);
+      unset($value_element['#suffix']);
+
+      $test = true;
+
+      $response->addCommand(new ReplaceCommand('#edit-field-media-idix-generic-' . $delta . '-value', $value_element));
+
     }catch(ResourceException $e){
-      $form[$array_parents[0]][$array_parents[1]][$array_parents[2]][$array_parents[3]]['container']['error']['#markup'] = '<div class="error">L\'url indiquée ne correspond pas à un média compatible oEmbed, veuillez directement copier/coller le code d\'insertion dans le champ ci-dessous.</div>';
+      $response->addCommand(new HtmlCommand('#edit-field-media-idix-generic-' . $delta . '-error', ''));
     }
 
-    return $form[$array_parents[0]][$array_parents[1]];
+    return $response;
   }
 
   public function massageFormValues(array $values, array $form, FormStateInterface $form_state)
