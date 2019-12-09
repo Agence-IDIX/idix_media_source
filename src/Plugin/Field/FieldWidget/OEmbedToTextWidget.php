@@ -62,7 +62,6 @@ class OEmbedToTextWidget extends StringTextareaWidget {
       ],
       '#ajax' => [
         'callback' => [$this, 'transformUrlToEmbed'],
-        //'wrapper' => 'edit-field-media-idix-generic-' . $delta . '-fieldset',
       ],
       '#name' => 'load-' . $delta,
     ];
@@ -77,9 +76,15 @@ class OEmbedToTextWidget extends StringTextareaWidget {
       '#placeholder' => $this->getSetting('placeholder'),
       '#attributes' => [
         'class' => ['js-text-full', 'text-full'],
-        //'id' => ['edit-field-media-idix-generic-' . $delta . '-value']
       ],
       '#required' => $element['#required'],
+    ];
+
+    $new_element['value'] = [
+      '#prefix' => '<div id="edit-field-media-idix-generic-' . $delta . '-hidden-value">',
+      '#suffix' => '</div>',
+      '#type' => 'hidden',
+      '#default_value' => $items[$delta]->value,
     ];
 
     return $new_element;
@@ -96,6 +101,12 @@ class OEmbedToTextWidget extends StringTextareaWidget {
     array_pop($array_parents);
     array_pop($array_parents);
     array_push($array_parents, 'value');
+
+    $array_parents_bis = $trigger['#array_parents'];
+    array_pop($array_parents_bis);
+    array_pop($array_parents_bis);
+    array_pop($array_parents_bis);
+    array_push($array_parents_bis, 'value');
 
     $delta = str_replace('load-', '', $trigger['#name']);
 
@@ -118,9 +129,15 @@ class OEmbedToTextWidget extends StringTextareaWidget {
       unset($value_element['#prefix']);
       unset($value_element['#suffix']);
 
-      $test = true;
+      $hidden_value_element = NestedArray::getValue($form, $array_parents_bis);
+
+      $hidden_value_element['#default_value'] = $markup->__toString();
+      $hidden_value_element['#value'] = $markup->__toString();
+      unset($hidden_value_element['#prefix']);
+      unset($hidden_value_element['#suffix']);
 
       $response->addCommand(new ReplaceCommand('#edit-field-media-idix-generic-' . $delta . '-value', $value_element));
+      $response->addCommand(new ReplaceCommand('#edit-field-media-idix-generic-' . $delta . '-hidden-value', $hidden_value_element));
 
     }catch(ResourceException $e){
       $response->addCommand(new HtmlCommand('#edit-field-media-idix-generic-' . $delta . '-error', ''));
@@ -128,19 +145,4 @@ class OEmbedToTextWidget extends StringTextareaWidget {
 
     return $response;
   }
-
-  public function massageFormValues(array $values, array $form, FormStateInterface $form_state)
-  {
-    $raw_values = $values;
-    $values = [];
-
-    foreach($raw_values as $raw_value){
-      $delta = $raw_value['_original_delta'];
-      $value = $raw_value['fieldset']['value'];
-      $values[$delta]['value'] = $value;
-    }
-
-    return $values;
-  }
-
 }
