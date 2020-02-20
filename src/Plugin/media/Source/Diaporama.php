@@ -56,13 +56,26 @@ class Diaporama extends MediaSourceBase implements MediaSourceEntityConstraintsI
 
       case 'thumbnail_uri':
         $source_field = $this->configuration['source_field'];
+        $slideshow_item = null;
 
         /** @var \Drupal\media\MediaInterface $slideshow_item */
-        $slideshow_item = $this->entityTypeManager->getStorage('media')->load($media->{$source_field}->target_id);
-        if (!$slideshow_item) {
-          return parent::getMetadata($media, 'thumbnail_uri');
+        if (isset($media->{$source_field}->target_id) && !empty($media->{$source_field}->target_id)) {
+            $media_id = $media->{$source_field}->target_id;
+        } else if (isset($media->{$source_field}->entity->field_diapositives)
+            && isset($media->{$source_field}->entity->field_diapositives->entity->field_image)
+            && isset($media->{$source_field}->entity->field_diapositives->entity->field_image->entity)
+        ) {
+            $media_id = $media->{$source_field}->entity->field_diapositives->entity->field_image->entity->id();
         }
 
+        if (isset($media_id)) {
+            $slideshow_item = $this->entityTypeManager->getStorage('media')->load($media_id);
+        }
+
+        if (!$slideshow_item) {
+            return parent::getMetadata($media, 'thumbnail_uri');
+        }
+          
         /** @var \Drupal\media\MediaTypeInterface $bundle */
         $bundle = $this->entityTypeManager->getStorage('media_type')->load($slideshow_item->bundle());
         if (!$bundle) {
