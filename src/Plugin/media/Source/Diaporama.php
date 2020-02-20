@@ -5,6 +5,7 @@ namespace Drupal\idix_media_source\Plugin\media\Source;
 use Drupal\media\MediaInterface;
 use Drupal\media\MediaSourceBase;
 use Drupal\media\MediaSourceEntityConstraintsInterface;
+use Drupal\image\Entity\ImageStyle;
 
 /**
  * Provides media type plugin for Slideshows.
@@ -86,6 +87,24 @@ class Diaporama extends MediaSourceBase implements MediaSourceEntityConstraintsI
         if (!$thumbnail) {
           return parent::getMetadata($media, 'thumbnail_uri');
         }
+
+          // Test Image BDI
+          if ($bundle->id() == 'image_bdi') {
+              $style = ImageStyle::load('crop_thumbnail');
+              $item = $slideshow_item->field_media_image_bdi->get(0);
+              $uri = $item->url;
+              /** @var \Drupal\dargaud_bda\BDImageTransformer $bdi_transformer */
+              $bdi_transformer = \Drupal::service('bdi.transformer');
+              // Determine the dimensions of the styled image.
+              $dimensions = [
+                  'width' => $item->width,
+                  'height' => $item->height,
+              ];
+
+              @$style->transformDimensions($dimensions, $uri);
+
+              $thumbnail = $bdi_transformer->getTransformedUrl($item, $style, $dimensions);
+          }
 
         return $thumbnail;
 
