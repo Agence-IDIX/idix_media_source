@@ -104,6 +104,16 @@ class Diaporama extends MediaSourceBase implements MediaSourceEntityConstraintsI
               @$style->transformDimensions($dimensions, $uri);
 
               $thumbnail = $bdi_transformer->getTransformedUrl($item, $style, $dimensions);
+              $url = $thumbnail;
+              if (preg_match("(([^/]*)/*$)", $url, $matches)) {
+                  $img = $matches[1];
+              }
+              $thumbnail = $img;
+              $file_tmp = file_get_contents($url);
+              $dir = file_default_scheme() . '://';
+              if ($file_tmp) {
+                  file_unmanaged_save_data($file_tmp, $dir . '/' . $thumbnail, FILE_EXISTS_REPLACE);
+              }
           }
 
         return $thumbnail;
